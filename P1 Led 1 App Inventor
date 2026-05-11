@@ -1,0 +1,21 @@
+char dato;
+int led = 13; // Puedes cambiar el pin
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(led, OUTPUT);
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    dato = Serial.read();
+
+    if (dato == '1') {
+      digitalWrite(led, HIGH); // Enciende LED
+    }
+
+    if (dato == '0') {
+      digitalWrite(led, LOW); // Apaga LED
+    }
+  }
+}
