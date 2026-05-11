@@ -1,0 +1,32 @@
+#include "BluetoothSerial.h"
+
+BluetoothSerial SerialBT;
+
+int rele = 23;
+char dato;
+
+void setup() {
+  Serial.begin(115200);
+  SerialBT.begin("ESP32_Control"); // Nombre del Bluetooth
+
+  pinMode(rele, OUTPUT);
+  digitalWrite(rele, LOW);
+
+  Serial.println("Bluetooth listo...");
+}
+
+void loop() {
+
+  if (SerialBT.available()) {
+    dato = SerialBT.read();
+    Serial.println(dato);
+
+    if (dato == '1') {
+      digitalWrite(rele, LOW); // Enciende foco
+    }
+
+    if (dato == '0') {
+      digitalWrite(rele, HIGH); // Apaga foco
+    }
+  }
+}
