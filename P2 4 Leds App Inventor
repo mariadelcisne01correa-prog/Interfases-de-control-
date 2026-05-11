@@ -1,0 +1,84 @@
+#include "BluetoothSerial.h"
+
+BluetoothSerial BT;
+
+// LEDs
+const int leds[4] = {2, 4, 5, 18};
+
+// Botones
+const int botones[4] = {12, 13, 14, 27};
+
+// Estados
+bool estado[4] = {false, false, false, false};
+
+// Estado anterior (para detectar pulsación)
+bool lastBtn[4] = {HIGH, HIGH, HIGH, HIGH};
+
+// Letras Bluetooth
+char encender[4] = {'A','B','C','D'};
+char apagar[4]   = {'a','b','c','d'};
+
+void setup() {
+  BT.begin("ESP32_BT");
+  Serial.begin(115200);
+
+  for (int i = 0; i < 4; i++) {
+    pinMode(leds[i], OUTPUT);
+    pinMode(botones[i], INPUT_PULLUP);
+  }
+}
+
+//  Enviar estado a la app
+void enviarEstado(int i) {
+  if (estado[i]) {
+    BT.write(encender[i]);
+  } else {
+    BT.write(apagar[i]);
+  }
+}
+
+//  Leer botón (antirrebote REAL)
+void leerBoton(int i) {
+  bool lectura = digitalRead(botones[i]);
+
+  // Detecta flanco de bajada (cuando presionas)
+  if (lastBtn[i] == HIGH && lectura == LOW) {
+    delay(50); // antirrebote simple pero efectivo
+
+    if (digitalRead(botones[i]) == LOW) {
+      estado[i] = !estado[i];
+      enviarEstado(i);
+    }
+  }
+
+  lastBtn[i] = lectura;
+}
+
+void loop() {
+
+  //  CONTROL BLUETOOTH
+  if (BT.available()) {
+    char dato = BT.read();
+
+    for (int i = 0; i < 4; i++) {
+      if (dato == encender[i]) {
+        estado[i] = true;
+        enviarEstado(i);
+      }
+      if (dato == apagar[i]) {
+        estado[i] = false;
+        enviarEstado(i);
+      }
+    }
+  }
+
+  //  BOTONES
+  for (int i = 0; i < 4; i++) {
+    leerBoton(i);
+  }
+
+  //  SALIDA LEDs
+  for (int i = 0; i < 4; i++) {
+    digitalWrite(leds[i], estado[i]);
+  }
+}
